@@ -12,7 +12,7 @@ def quicksort(number_list: list[int | float]) -> list[int | float]:
     # Aquí llamamos a la implementación de quicksort.
     # Lo realizamos de este modo para que consumidores de la función 
     # no deban preocuparse por colocar los índices correctos.
-    return quicksort_impl(number_list, 0, len(number_list))
+    return quicksort_impl(number_list, 0, len(number_list) - 1)
 
 def quicksort_impl(number_list: list[int | float], start: int, end: int) -> list[int | float]:
     """
@@ -29,57 +29,62 @@ def quicksort_impl(number_list: list[int | float], start: int, end: int) -> list
         :param end: índice de fin de la sublista
         :type int
     """
-    # El largo de la sublista a ordenar. 
-    length = end - start
+    # El largo de la sublista. Puesto que los límites son inclusivos, 
+    # sumamos uno para obtener el largo real.
+    length = end - start + 1
     # Caso base:
     # Si el largo es menor o igual a 1, entonces la sublista ya está ordenada.
     # Retornar la lista como está.
     if length <= 1:
         return number_list
 
-    # Selección del pivote como el primer elemento de la sublista.
-    pivot_index = start
+    # Selección del pivote como el elemento medio de la sublista.
+    pivot_index = start + (end - start) // 2
     pivot = number_list[pivot_index]
 
-    # Partición: Reordenamos la lista de modo que los números menores
-    # al pivote estén a la izquierda y los mayores a la derecha.
+    # Partición: Reordenamos la sublista de modo que los valores menores al 
+    # pivote se encuentren a la izquierda y los mayores a la derecha de un índice
+    # dado por `pivot_index`. Lo que sigue es una implementación de la partición 
+    # de Hoare, que tiene mejor complejidad algoritmica que sus alternativas.
+    # Véase: https://en.wikipedia.org/wiki/Quicksort#Hoare_partition_scheme
 
-    # Como el pivote es el primer elemento, comenzamos la partición desde
-    # el segundo elemento de la sublista
-    i = start + 1
+    # Definimos dos índices, uno izquierdo y otro derecho.
+    left = start - 1
+    right = end + 1
+    while True:
+        # Avanzamos el índice izquierdo mientras encontremos valores
+        # menores que el pivote.
+        left += 1
+        while number_list[left] < pivot:
+            left += 1
 
-    # Mientras que no hayamos avanzado hasta el final...
-    while i < end:
-        # Tomamos un número de la sublista
-        number = number_list[i]
-        # Si es menor o igual al pivote...
-        if number <= pivot:
-            # Lo insertamos a la izquierda, es decir...
-            # ...lo removemos de su posición original...
-            number_list.pop(i)
-            # ...y lo insertamos justo antes de la posición del pivote
-            number_list.insert(pivot_index, number)
+        # Avanzamos el índice derecho mientras encontremos valores
+        # mayores que el pivote. 
+        right -= 1
+        while number_list[right] > pivot:
+            right -= 1
 
-            # Luego de la inserción, la posición del pivote
-            # aumenta en uno
-            pivot_index += 1
-        else:
-            # Si el elemento es mayor al pivote, lo insertamos a la derecha...
-            # ... lo removemos de su posición original...
-            number_list.pop(i)
-            # ... lo insertamos justo después de la posición del pivote.
-            number_list.insert(pivot_index + 1, number)
-
-            # Colocar un elemento a la derecha no cambia la posición 
-            # del pivote.
-        i += 1
+        # Si los índices se han cruzado, entonces el algoritmo ha terminado.
+        if left >= right:
+            # Para este punto, las siguientes condiciones se cumplen:
+                # - a la derecha del índice `right` hay valores no menores al pivote
+                #   (puesto que los que eran menores se han intercambiado)
+                # - a la izquierda del índice `right` hay valores no mayores al pivote
+                #    (puesto que los que eran mayores se han intercambiado)
+            # Es decir, el índice `right` cumple con las condiciones de la partición
+            # y podemos usarlo para continuar con el ordenamiento.
+            pivot_index = right
+            break
+        
+        # Si no, intercambiamos las posiciones de los elementos correspondientes.
+        number_list[left], number_list[right] = number_list[right], number_list[left]
 
     # Caso recursivo: Llamamos a *quicksort_impl* para ordenar
     # las sublistas que formamos: 
         # - una sublista va desde start hasta pivot_index
         # - la otra va desde pivot_index + 1 hasta end
     quicksort_impl(number_list, start, pivot_index)
-    quicksort_impl(number_list, pivot_index+1, end)
+    quicksort_impl(number_list, pivot_index + 1, end)
 
     # Finalizamos la recursión retornando la lista luego de que haya sido
     # modificado por las anteriores llamadas
